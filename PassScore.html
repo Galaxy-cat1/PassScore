@@ -1,1 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Password Strength Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .strength {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .weak { color: red; }
+        .medium { color: orange; }
+        .strong { color: green; }
+        .meter {
+            height: 10px;
+            width: 100%;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        .tips { margin-top: 10px; font-size: 0.9em; color: #333; }
+        .eye-icon {
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Password Strength Checker</h1>
+    <div style="display: flex; align-items: center;">
+        <input type="password" id="password" placeholder="Enter your password" oninput="checkPassword()" />
+        <span class="eye-icon" id="toggleVisibility" onclick="togglePasswordVisibility()">👁️</span>
+    </div>
+    <div id="result" class="strength"></div>
+    <div class="meter">
+        <div id="meterFill" class="fill"></div>
+    </div>
+    <div id="tips" class="tips"></div>
 
+    <script>
+        const commonPasswords = ["123456", "password", "123456789", "12345678", "12345", "qwerty", "abc123", "letmein", "monkey", "iloveyou"];
+        const commonWords = ["the", "of", "and", "to", "a", "in", "is", "you", "that", "it"]; // Add more common words as needed
+
+        function calculateEntropy(password) {
+            const uniqueChars = new Set(password);
+            const base = uniqueChars.size;
+            return Math.log2(Math.pow(base, password.length));
+        }
+
+        function hasSequentialChars(password) {
+            return /(.)\1{2,}|012|123|234|345|456|567|678|789|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz/i.test(password);
+        }
+
+        function containsLeetSpeak(password) {
+            const leetSpeakPatterns = {
+                'a': '4', 'e': '3', 'i': '1', 'o': '0', 's': '5', 't': '7', 'g': '9'
+            };
+            return Object.keys(leetSpeakPatterns).some(char => password.includes(leetSpeakPatterns[char]));
+        }
+
+        function containsCommonWords(password) {
+            return commonWords.some(word => password.toLowerCase().includes(word));
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            const meterFill = document.getElementById('meterFill');
+            const tipsDiv = document.getElementById('tips');
+            let strength = '';
+            let score = 0;
+            let tips = [];
+
+            // Resetting meter and feedback
+            meterFill.style.width = '0%';
+            tipsDiv.innerHTML = '';
+
+            // Check length
+            if (password.length >= 12) score++;
+            else if (password.length >= 8) score++;
+
+            // Check for character types
+            if (/[A-Z]/.test(password)) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[\W_]/.test(password)) score++;
+
+            // Check against common passwords
+            if (commonPasswords.includes(password)) {
+                score = 0;
+                tips.push('Avoid using common passwords.');
+            }
+
+            // Check for sequential characters
+            if (hasSequentialChars(password)) {
+                score--;
+                tips.push('Avoid using sequential characters.');
+            }
+
+            // Check for leet speak
+            if (containsLeetSpeak(password)) {
+                score--;
+                tips.push('Avoid using leet speak; it does not significantly increase security.');
+            }
+
+            // Check for common words
+            if (containsCommonWords(password)) {
+                score--;
+                tips.push('Avoid using common words or phrases in your password.');
+            }
+
+            // Calculate entropy
+            const entropy = calculateEntropy(password);
+            if (entropy < 40) {
+                score--;
+                tips.push('Consider using a more varied character set for better security.');
+            }
+
+            // Determine strength based on score
+            switch (score) {
+                case 0:
+                case 1:
+                    strength = 'Very Weak';
+                    resultDiv.className = 'strength weak';
+                    meterFill.style.width = '10%';
+                    meterFill.style.backgroundColor = 'purple';
+                    tips.push('Very weak! Use at least 12 characters with a mix of letters, numbers, and symbols.');
+                    break;
+                case 2:
+                    strength = 'Weak';
+                    resultDiv.className = 'strength weak';
+                    meterFill.style.width = '30%';
+                    meterFill.style.backgroundColor = 'red';
+                    tips.push('Weak! Consider adding more unique characters.');
+                    break;
+                case 3:
+                    strength = 'Medium';
+                    resultDiv.className = 'strength medium';
+                    meterFill.style.width = '60%';
+                    meterFill.style.backgroundColor = 'yellow';
+                    tips.push('Medium! Aim for a stronger password with more complexity.');
+                    break;
+                case 4:
+                    strength = 'Strong';
+                    resultDiv.className = 'strength strong';
+                    meterFill.style.width = '80%';
+                    meterFill.style.backgroundColor = 'lightgreen';
+                    tips.push('Strong! Good job, but you can still improve.');
+                    break;
+                case 5:
+                    strength = 'Very Strong';
+                    resultDiv.className = 'strength strong';
+                    meterFill.style.width = '100%';
+                    meterFill.style.backgroundColor = 'blue';
+                    tips.push('Amazing! Your password is very strong.');
+                    break;
+            }
+
+            resultDiv.textContent = `Strength: ${strength}`;
+            tipsDiv.innerHTML = tips.join('<br/>');
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleVisibility = document.getElementById('toggleVisibility');
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleVisibility.textContent = "👁️‍🗨️"; // Change icon to indicate password is visible
+            } else {
+                passwordInput.type = "password";
+                toggleVisibility.textContent = "👁️"; // Change icon back to indicate password is hidden
+            }
+        }
+    </script>
+</body>
+</html>
