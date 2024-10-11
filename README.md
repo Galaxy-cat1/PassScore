@@ -1,2 +1,2 @@
 # PassScore
-Advanced Password Strength checker tool, complete with visual meter, real-time feedback, entropy calculation, leet speak detection, pattern detection, and dictionary attack prevention.
+Advanced Password Creation and Strength Assesion tool, complete with a ton of features to create strong and secure passwords. 
